@@ -7,7 +7,6 @@ import re
 import time
 import os
 import tkinter as tk
-from dotenv import load_dotenv
 from onepush import notify
 import logging
 import logreset
