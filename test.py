@@ -48,61 +48,43 @@ def get_OCR_result(screenshot_path):
 if __name__ == "__main__":
     # 使用logging模块配置日志输出格式和级别
 
-    print("开始识别")
-    screenshot_path = get_screenshot()
-    result = get_OCR_result(screenshot_path)
-    print(f"result: {result}")
-    pattern = r"(\d+)月已累计签到(\d+)天"
-    for i in result:
-        text = i[1][0]
-        match = re.search(pattern, text)
-        if match:
-            print(match.group(2))
-            now = datetime.now().day
-            print(now)
-            print(i)
-        # if "签到福利" in i[1][0]:
-        #     logging.info(i)
-    with open("data.json", "w", encoding="utf-8") as file:
-        json.dump(result, file, ensure_ascii=False)
+    # print("开始识别")
+    # screenshot_path = get_screenshot()
+    # result = get_OCR_result(screenshot_path)
+    # print(f"result: {result}")
+    # pattern = r"(\d+)月已累计签到(\d+)天"
     # for i in result:
-    #     coordinates = i[0]
-    #     center_x, center_y = calculate_center(coordinates)
-    #     logging.info("中心点坐标：({}, {})".format(center_x, center_y))
+    #     text = i[1][0]
+    #     match = re.search(pattern, text)
+    #     if match:
+    #         print(match.group(2))
+    #         now = datetime.now().day
+    #         print(now)
+    #         print(i)
+    #     # if "签到福利" in i[1][0]:
+    #     #     logging.info(i)
+    # with open("data.json", "w", encoding="utf-8") as file:
+    #     json.dump(result, file, ensure_ascii=False)
+    # last_sign_in_day = datetime.now().isoformat()
+    # data = {"last_sign_in_day": last_sign_in_day}
+    # with open("last_sign_in_day.json", "w", encoding="utf-8") as f:
+    #     json.dump(data, f)
 
-    # coordinates = [
-    #     [1099.0, 1227.0],
-    #     [1279.0, 1227.0],
-    #     [1279.0, 1293.0],
-    #     [1099.0, 1293.0],
-    # ]
+    # with open("last_sign_in_day.json", "r") as file:
+    #     data = json.load(file)
+    # # 将字符串转换为datetime对象
+    # last_sign_in_day = data["last_sign_in_day"]
+    # last_sign_in_day = datetime.fromisoformat(last_sign_in_day)
 
-    # center_x, center_y = calculate_center(coordinates)
-    # logging.info("中心点坐标：({}, {})".format(center_x, center_y))
+    # # 打印datetime对象
+    # print(last_sign_in_day)
 
-# """离线百度文本识别"""
-# ocr = PaddleOCR(
-#     use_angle_cls=True, lang="ch"
-# )  # need to run only once to download and load model into memory
-# img_path = "screen.png"
-# result = ocr.ocr(img_path, cls=True)
-# result = result[0]
+    # 创建两个datetime对象
+    date1 = datetime(2023, 8, 1, 10, 30)
+    date2 = datetime(2023, 8, 1, 15, 45)
 
-# debug   显示结果
-# image = Image.open(img_path).convert('RGB')
-# boxes = [line[0] for line in result]
-# txts = [line[1][0] for line in result]
-# scores = [line[1][1] for line in result]
-# im_show = draw_ocr(image, boxes, txts, scores, font_path='./fonts/simfang.ttf')
-# im_show = Image.fromarray(im_show)
-# im_show.save('result.jpg')
-
-# for i in result:
-#     if "回顶部" in i[1][0]:
-#         center = i[0][0]
-#         break
-# os.system("adb shell input tap {} {}".format(center[0], center[1]))
-
-
-"""联网百度文本识别"""
-# result = subprocess.check_output("paddleocr --image_dir screen.png", shell=True)
+    # 比较两个datetime对象的日期部分
+    if date1.date() == date2.date():
+        print("两个datetime对象在同一天")
+    else:
+        print("两个datetime对象不在同一天")
