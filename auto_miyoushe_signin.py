@@ -32,6 +32,7 @@ def notify_me(title, content, notifier, params):
     return notify(notifier, title=title, content=content, **params)
 
 
+# 获取分辨率
 def get_resolution():
     adb_command = "adb shell wm size"
     result = subprocess.check_output(adb_command, shell=True)
@@ -50,6 +51,26 @@ def get_resolution():
         raise "未能获取设备分辨率"
     res_list = [int(x) for x in resolution.split("x")]
     return res_list
+
+
+# 获取 DPI
+def get_density():
+    adb_command = "adb shell wm density"
+    result = subprocess.check_output(adb_command, shell=True)
+
+    # 解析输出以获取分辨率
+    output_str = result.decode("utf-8")
+    lines = output_str.strip().split("\n")
+    density = None
+
+    for line in lines:
+        if "Physical density:" in line:
+            density = line.split(":")[1].strip()
+    if density:
+        logging.info(f"设备DPI: {density}")
+    else:
+        raise "未能获取设备DPI"
+    return int(density)
 
 
 # ABD 点击，例如 [0,0]
@@ -164,10 +185,12 @@ def turn2main_page():
         ]
     )
     time.sleep(8)
+    # 确保在 首页
+    # match_text_and_click("首页", 5)
     # 向右拖动tab，确保签到顺序
     x, y = get_resolution()
     height = get_tab_height()
-    adb_swipe(0, height, x // 2, height)
+    adb_swipe(0, height, x, height)
     time.sleep(3)
 
 
@@ -283,14 +306,13 @@ def sign_in_by_game_benefits(tab_name, clock_in_bbs=True):
             return False, clock_in_bbs_result
         if re.search(pattern, text):  # 遍历所有的 第x天
             coordinates = i[0]
-            adb_tap_center(coordinates, 1)
-    time.sleep(3)
-    result = get_new_screenshot_OCR_result()
-    for i in result:
-        if "签到成功" in i[1][0]:
-            logging.info(f"{tab_name} 签到成功")
-            adb_back()  # 返回到上一页
-            return True, clock_in_bbs_result
+            adb_tap_center(coordinates, 3)
+            result = match_text_by_OCR_result("签到成功")
+            if result:
+                logging.info(f"{tab_name} 签到成功")
+                adb_back()  # 返回到上一页
+                return True, clock_in_bbs_result
+
     logging.info(f"{tab_name} 签到失败")
     adb_back()  # 返回到上一页
     return False, clock_in_bbs_result
@@ -357,6 +379,10 @@ if __name__ == "__main__":
     CLOCK_IN_BBS = config.get("CLOCK_IN_BBS", True)
     os.system(f"adb connect 127.0.0.1:{ADB_PORT}")
     os.system("adb devices")
+    # 修改当前模拟器 分辨率，避免分辨率过高或过低。如果OCR效率较低，可以考虑降低分辨率 1080x1920
+    os.system("adb shell wm size 1080x1920")
+    # 修改当前模拟器 DPI，解决DPI过高时 tab 栏缩一块了
+    os.system("adb shell wm density 360")
     # 创建截图文件夹
     folder_name = "screenshots"
     os.makedirs(folder_name, exist_ok=True)
