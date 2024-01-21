@@ -28,6 +28,8 @@ if __name__ == "__main__":
     logging.basicConfig(
         format="%(asctime)s - %(levelname)s - %(message)s", level="INFO"
     )
+    folder_name = "screenshots"
+    os.makedirs(folder_name, exist_ok=True)
     # print("开始识别")
     screenshot_path = get_screenshot()
     result = get_OCR_result(screenshot_path)

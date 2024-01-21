@@ -345,17 +345,20 @@ if __name__ == "__main__":
         format="%(asctime)s - %(levelname)s - %(message)s", level="INFO"
     )
     # 读取YAML文件
-
     if os.path.exists("config.yml"):
         with open("config.yml", "r", encoding="utf-8") as file:
             config = yaml.safe_load(file)
     else:
         logging.error("未检测到 config.yml 配置文件，请配置后重试")
         exit(1)
+
     ADB_PORT = config.get("ADB_PORT", 16384)
     CLOCK_IN_BBS = config.get("CLOCK_IN_BBS", True)
     os.system(f"adb connect 127.0.0.1:{ADB_PORT}")
     os.system("adb devices")
+    # 创建截图文件夹
+    folder_name = "screenshots"
+    os.makedirs(folder_name, exist_ok=True)
     # 检查今天是否已经签到
     # 加载上次签到的日期
     try:
