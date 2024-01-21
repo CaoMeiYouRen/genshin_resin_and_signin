@@ -1,43 +1,45 @@
-# genshin_resin_and_signin_tool
-米游社自动签到和原神树脂提醒。所有功能通过脚本实现，无需cookie，很少出现验证码，目前真正实用的签到工具  
-**2023年11月26日**最新版本米游社V2.63.1实测可用  
-demo演示视频传送门：(https://www.bilibili.com/video/BV1sw411h7UJ/)
+# auto_miyoushe_signin
 
-<img src="https://github.com/goldencorner/dataset/blob/main/_images/demo_resin.png" alt="demo_resin" width="388" height="400">
+基于文字识别的米游社自动签到脚本。
+
+所有功能通过文字识别实现，无需 cookie，很少出现验证码，目前真正实用的签到工具。
 
 ## 功能
-- 每天一次在原神米游社签到
-- 树脂快满时发送提醒到你的微信
-## 环境配置(windows x64)
-1.安装百度OCR库(参考https://github.com/PaddlePaddle/PaddleOCR/blob/release/2.7/doc/doc_ch/quickstart.md#22)
-```bash
-pip install paddlepaddle -i https://mirror.baidu.com/pypi/simple
-pip install "paddleocr>=2.0.1" -i https://mirror.baidu.com/pypi/simple
+- 自动领取米游社签到福利
+  - 包括原神、崩坏：星穹铁道、崩坏 3 等
+  - 也支持米游社社区自动打卡
+- 支持企业微信、钉钉等多个推送渠道
+  - 详情请前往 [onepush](https://github.com/y1ndan/onepush) 页面查看
+
+## 环境要求(windows x64)
+
+- python >=3.6
+- 一个支持 adb 的模拟器
+
+## 安装依赖
+
+```sh
+pip install -r requirements.txt
 ```
-2.安装其他必要的库
-```bash
-pip install paddleocr opencv-python pillow requests jmetalpy==1.5.5 matplotlib tqdm -i https://mirror.baidu.com/pypi/simple
-```
+
+
 ## 用法
-1. USB连接一台安装米游社(测试版本：V2.63.1)的手机，并确认adb可用
-```c
->>>adb devices
-List of devices  attached
-4b439028         device
-```
-2. 从server酱（https://sct.ftqq.com/after ）获取SendKey并替换resin_and_signin.py文件中的相应代码
-```python
-def send_wechat(text):
-    url = "https://sctapi.ftqq.com/SCT205640T2og2nNrP2BE8mR0H3sRbShJ4.send"  # 替换为自己的SendKey
-    params = {
-        "title": text
-    }
-    response = requests.post(url, data=params, proxies=None, timeout=10)
-    print(response.text)
-```
-3. 首次启动脚本时会自动进行分辨率适配，这个过程中出现弹窗和异常界面将导致分辨率适配失败，因此启动前需要手动检查APP能否正常进入树脂界面和签到界面（需要保持未签到的状态，否则要第二天才能运行）
-4. 运行resin_and_signin.py
-## 特性
-- 分辨率自适应：模板匹配时支持自动缩放，从而适配不同的手机分辨率
-- **电量控制**：电量高于50%时，此脚本会自动增加CPU负载。此功能需要配合低功率的充电口使用（推荐使用主板上USB2.0的口再连接USB延长线）。若长期挂机使用，务必确保手机电量能够稳定处于100%以下，否则电池过充可导致**鼓包和其他危险**
-- 基于前沿的OCR识别工具，容错率较高
+
+1. 复制根目录下的 `config.example.yml` 文件，并改为 `config.yml`
+2. 填写 `ADB_PORT` (必须)、`CLOCK_IN_BBS`(可选)、`ONEPUSH_CONFIG`(可选)。`ADB_PORT` 为要连接的模拟器的 adb 端口，可查询各大模拟器文档获取；`CLOCK_IN_BBS`为是否在对应游戏的米游社打卡，默认为 `true`；`ONEPUSH_CONFIG` 为  [onepush](https://github.com/y1ndan/onepush) 相关配置，请自行了解
+3. 启动已安装好米游社的模拟器
+4. 运行 `python auto_miyoushe_signin.py`
+5. 查看运行结果
+
+## 作者
+
+
+👤 **CaoMeiYouRen**
+
+* Website: [https://blog.cmyr.ltd/](https://blog.cmyr.ltd/)
+* GitHub: [@CaoMeiYouRen](https://github.com/CaoMeiYouRen)
+
+## 📝 License
+
+Copyright © 2024 [CaoMeiYouRen](https://github.com/CaoMeiYouRen).<br />
+This project is [AGPL-3.0](https://github.com/CaoMeiYouRen/auto_miyoushe_signin/blob/master/LICENSE) licensed.
