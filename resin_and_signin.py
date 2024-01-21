@@ -8,10 +8,20 @@ import time
 import os
 import tkinter as tk
 from dotenv import load_dotenv
-
+from onepush import notify
+import logging
+import logreset
+import yaml
 
 std_confidence = 0.9
 package_name = "com.mihoyo.hyperion"
+
+
+def notify_me(title, content, notifier, params):
+    if not notifier or not params:
+        logging.info("未设置推送")
+        return
+    return notify(notifier, title=title, content=content, **params)
 
 
 # ABD 点击，例如 [0,0]
@@ -106,7 +116,7 @@ def turn2main_page():
 
 
 def relaunch_APP():
-    print("relaunch APP")
+    logging.info("relaunch APP")
     subprocess.call(["adb", "shell", "am", "force-stop", f"{package_name}"])
     time.sleep(8)
     turn2main_page()
@@ -176,13 +186,13 @@ miyoushe_bbs = {
 def sign_in_by_game_benefits(tab_name, clock_in_bbs=True):
     global miyoushe_bbs
     clock_in_bbs_result = False
-    print(f"正在签到 {tab_name}")
+    logging.info(f"正在签到 {tab_name}")
 
     handle_pop_up()
     # 切换 tab
     result = match_text_and_click(tab_name)
     if not result:  # 未匹配到文本，跳过执行
-        print(f"未检测到 {tab_name} tab，已跳过")
+        logging.info(f"未检测到 {tab_name} tab，已跳过")
         return False, False
 
     if clock_in_bbs:
@@ -197,10 +207,10 @@ def sign_in_by_game_benefits(tab_name, clock_in_bbs=True):
                 result = match_text_and_click("打卡")
                 if result:
                     clock_in_bbs_result = True
-                    print(f"{tab_name} {bbs_tab_name} 打卡成功！")
+                    logging.info(f"{tab_name} {bbs_tab_name} 打卡成功！")
             else:
                 clock_in_bbs_result = True
-                print(f"{tab_name} {bbs_tab_name} 已打卡，跳过本次打卡")
+                logging.info(f"{tab_name} {bbs_tab_name} 已打卡，跳过本次打卡")
 
     # 点击 签到福利页面
     result = match_text_and_click("签到福利")
@@ -219,11 +229,11 @@ def sign_in_by_game_benefits(tab_name, clock_in_bbs=True):
             signed_days = match.group(2)
             # 判断是否已签到
             if signed_days == now_day:
-                print(f"{tab_name} 已签到，跳过本次执行")
+                logging.info(f"{tab_name} 已签到，跳过本次执行")
                 adb_back()  # 返回到上一页
                 return True, clock_in_bbs_result
         if "请选择角色" in text:
-            print(f"{tab_name} 未绑定任何角色，跳过本次签到")
+            logging.info(f"{tab_name} 未绑定任何角色，跳过本次签到")
             adb_back()  # 返回到上一页
             return False, clock_in_bbs_result
         if re.search(pattern, text):  # 遍历所有的 第x天
@@ -275,28 +285,35 @@ def pop_up_windows(str):
 
 
 # 推送消息
-def send_notify(text):
-    print(text)
-    # params = {"title": text}
-    # response = requests.post(url, data=params, proxies=None, timeout=10)
-    # print(response.text)
+def send_notify(title, text, config):
+    logging.info(f"{title}\n{text}")
+    for item in config:
+        response = notify_me(title, text, item["notifier"], item["params"])
+        logging.info(response.text)
 
 
-# while True:
 if __name__ == "__main__":
-    if os.path.exists(".env.local"):
-        load_dotenv(".env.local")
-    elif os.path.exists(".env"):
-        load_dotenv(".env")
+    logreset.reset_logging()  # before you logging setting
+    # 使用logging模块配置日志输出格式和级别
+    logging.basicConfig(
+        format="%(asctime)s - %(levelname)s - %(message)s", level="INFO"
+    )
+    # 读取YAML文件
 
-    ADB_PORT = int(os.environ.get("ADB_PORT") or 16384)
-    CLOCK_IN_BBS = os.environ.get("CLOCK_IN_BBS") == "true"
+    if os.path.exists(".env.local"):
+        with open("config.yml", "r", encoding="utf-8") as file:
+            config = yaml.safe_load(file)
+    else:
+        logging.error("未检测到 config.yml 配置文件，请配置后重试")
+        exit(1)
+    ADB_PORT = config.get("ADB_PORT", 16384)
+    CLOCK_IN_BBS = config.get("CLOCK_IN_BBS", True)
     os.system(f"adb connect 127.0.0.1:{ADB_PORT}")
     os.system("adb devices")
     # 检查今天是否已经签到
     # 加载上次签到的日期
     try:
-        with open("last_sign_in_day.json", "r") as f:
+        with open("last_sign_in_day.json", "r", encoding="utf-8") as f:
             data = json.load(f)
             last_sign_in_day = datetime.fromisoformat(data["last_sign_in_day"])
     except FileNotFoundError:
@@ -329,14 +346,16 @@ if __name__ == "__main__":
                         notify_message = (
                             f"{notify_message}{key} - {miyoushe_bbs[key]} 打卡失败\n"
                         )
+
                 except Exception as e:
-                    print(e)
+                    logging.info(e)
+            notify_message = notify_message.strip()
             try:
-                send_notify(notify_message)
+                send_notify("米游社签到通知", notify_message, config.get("ONEPUSH_CONFIG", []))
             except:
                 pop_up_windows(notify_message)
             # 保存签到日期到磁盘上
             with open("last_sign_in_day.json", "w", encoding="utf-8") as f:
                 json.dump({"last_sign_in_day": last_sign_in_day.isoformat()}, f)
         except Exception as e:
-            traceback.print_exc()
+            traceback.logging.info_exc()

@@ -4,3 +4,5 @@ data.json
 *.pkl
 last_sign_in_day.json
 .env.local
+config.yml
+__pycache__

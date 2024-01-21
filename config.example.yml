@@ -1,0 +1,16 @@
+ADB_PORT: 16384
+CLOCK_IN_BBS: true
+ONEPUSH_CONFIG:
+  # 钉钉推送
+  - notifier: dingtalk
+    params:
+      markdown: true
+      token: ""
+      secret: ""
+  # 企业微信推送
+  - notifier: wechatworkapp
+    params:
+      markdown: true
+      corpid: ""
+      corpsecret: ""
+      agentid: ""

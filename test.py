@@ -1,9 +1,13 @@
 import os
 import re
 from datetime import datetime
+from resin_and_signin import send_notify
+
+import yaml
 
 from paddleocr import PaddleOCR
-import json
+import logging
+import logreset
 
 
 # def get_screenshot():
@@ -46,8 +50,11 @@ def get_OCR_result(screenshot_path):
 
 
 if __name__ == "__main__":
+    logreset.reset_logging()  # before you logging setting
     # 使用logging模块配置日志输出格式和级别
-
+    logging.basicConfig(
+        format="%(asctime)s - %(levelname)s - %(message)s", level="INFO"
+    )
     # print("开始识别")
     # screenshot_path = get_screenshot()
     # result = get_OCR_result(screenshot_path)
@@ -80,11 +87,20 @@ if __name__ == "__main__":
     # print(last_sign_in_day)
 
     # 创建两个datetime对象
-    date1 = datetime(2023, 8, 1, 10, 30)
-    date2 = datetime(2023, 8, 1, 15, 45)
+    # date1 = datetime(2023, 8, 1, 10, 30)
+    # date2 = datetime(2023, 8, 1, 15, 45)
 
-    # 比较两个datetime对象的日期部分
-    if date1.date() == date2.date():
-        print("两个datetime对象在同一天")
+    # # 比较两个datetime对象的日期部分
+    # if date1.date() == date2.date():
+    #     logging.info("两个datetime对象在同一天")
+    # else:
+    #     logging.info("两个datetime对象不在同一天")
+    if os.path.exists(".env.local"):
+        with open("config.yml", "r", encoding="utf-8") as file:
+            config = yaml.safe_load(file)
+            logging.info(config)
     else:
-        print("两个datetime对象不在同一天")
+        logging.error("未检测到 config.yml 配置文件，请配置后重试")
+        exit(1)
+    notify_message = "测试通知"
+    send_notify("米游社签到通知", notify_message, config.get("ONEPUSH_CONFIG", []))
