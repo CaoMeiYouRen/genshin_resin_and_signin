@@ -12,8 +12,17 @@ import logging
 import logreset
 import yaml
 
-std_confidence = 0.9
 package_name = "com.mihoyo.hyperion"
+
+miyoushe_bbs = {
+    "原神": "酒馆",
+    "综合": "ACG",
+    "星穹铁道": "候车室",
+    "绝区零": "咖啡馆",
+    "崩坏3": "甲板",
+    "未定事件簿": "律所",
+    "崩坏学园2": "学园",
+}
 
 
 def notify_me(title, content, notifier, params):
@@ -21,6 +30,26 @@ def notify_me(title, content, notifier, params):
         logging.info("未设置推送")
         return
     return notify(notifier, title=title, content=content, **params)
+
+
+def get_resolution():
+    adb_command = "adb shell wm size"
+    result = subprocess.check_output(adb_command, shell=True)
+
+    # 解析输出以获取分辨率
+    output_str = result.decode("utf-8")
+    lines = output_str.strip().split("\n")
+    resolution = None
+
+    for line in lines:
+        if "Physical size:" in line:
+            resolution = line.split(":")[1].strip()
+    if resolution:
+        logging.info(f"设备分辨率: {resolution}")
+    else:
+        raise "未能获取设备分辨率"
+    res_list = [int(x) for x in resolution.split("x")]
+    return res_list
 
 
 # ABD 点击，例如 [0,0]
@@ -63,6 +92,12 @@ def adb_back():
     subprocess.run(command, shell=True)
 
 
+# x1, y1, x2, y2
+def adb_swipe(x1, y1, x2, y2):
+    command = f"adb shell input swipe {x1} {y1} {x2} {y2}"
+    subprocess.run(command, shell=True)
+
+
 # 获取截图
 def get_screenshot():
     os.system("adb shell screencap -p /sdcard/screen.png")
@@ -76,6 +111,18 @@ def get_screenshot():
     return screenshot_path
 
 
+# 获取 tab 的高度
+def get_tab_height():
+    result = get_new_screenshot_OCR_result()
+    tabs = miyoushe_bbs.keys()
+    for i in result:
+        text = i[1][0]
+        if text in tabs:
+            x, y = calculate_center(i[0])
+            return y
+    return 0
+
+
 # 处理主界面可能出现的弹窗
 def handle_pop_up():
     result = get_new_screenshot_OCR_result()
@@ -85,6 +132,9 @@ def handle_pop_up():
             adb_tap_center(i[0])
             time.sleep(3)
         if "下次再说" in i[1][0]:
+            adb_tap_center(i[0])
+            time.sleep(3)
+        if "确定" in i[1][0]:
             adb_tap_center(i[0])
             time.sleep(3)
         if "米游社没有响应" in i[1][0]:
@@ -112,6 +162,11 @@ def turn2main_page():
         ]
     )
     time.sleep(8)
+    # 向右拖动tab，确保签到顺序
+    x, y = get_resolution()
+    height = get_tab_height()
+    adb_swipe(0, height, x // 2, height)
+    time.sleep(3)
 
 
 def relaunch_APP():
@@ -124,7 +179,7 @@ def relaunch_APP():
 
 def get_OCR_result(screenshot_path):
     ocr = PaddleOCR(
-        use_angle_cls=True, lang="ch"
+        use_angle_cls=True, lang="ch", show_log=False
     )  # need to run only once to download and load model into memory
     result = ocr.ocr(screenshot_path, cls=False)
     result = result[0]
@@ -169,17 +224,6 @@ def match_text_and_click(text, sleep_seconds=3, strict=False):
     return True
 
 
-miyoushe_bbs = {
-    "原神": "酒馆",
-    "综合": "ACG",
-    "星穹铁道": "候车室",
-    "绝区零": "咖啡馆",
-    "崩坏3": "甲板",
-    "未定事件簿": "律所",
-    "崩坏学园2": "学园",
-}
-
-
 # 米游社的游戏福利签到，兼容 原神、崩坏：星穹铁道、崩坏3 等
 # miyoushe
 def sign_in_by_game_benefits(tab_name, clock_in_bbs=True):
@@ -212,9 +256,9 @@ def sign_in_by_game_benefits(tab_name, clock_in_bbs=True):
                 logging.info(f"{tab_name} {bbs_tab_name} 已打卡，跳过本次打卡")
 
     # 点击 签到福利页面
-    result = match_text_and_click("签到福利")
+    result = match_text_and_click("签到福利", 5)
     if not result:  # 未匹配到文本，跳过执行
-        return False
+        return False, clock_in_bbs_result
 
     result = get_new_screenshot_OCR_result()
 
@@ -225,7 +269,8 @@ def sign_in_by_game_benefits(tab_name, clock_in_bbs=True):
         text = i[1][0]
         match = re.search(pattern_sign, text)  # 判断已签到天数
         if match:
-            signed_days = match.group(2)
+            signed_days = int(match.group(2))
+            logging.info(f"{tab_name} 已签到天数 {signed_days}；当前日期 {now_day}")
             # 判断是否已签到
             if signed_days == now_day:
                 logging.info(f"{tab_name} 已签到，跳过本次执行")
@@ -242,8 +287,10 @@ def sign_in_by_game_benefits(tab_name, clock_in_bbs=True):
     result = get_new_screenshot_OCR_result()
     for i in result:
         if "签到成功" in i[1][0]:
+            logging.info(f"{tab_name} 签到成功")
             adb_back()  # 返回到上一页
             return True, clock_in_bbs_result
+    logging.info(f"{tab_name} 签到失败")
     adb_back()  # 返回到上一页
     return False, clock_in_bbs_result
 
@@ -299,7 +346,7 @@ if __name__ == "__main__":
     )
     # 读取YAML文件
 
-    if os.path.exists(".env.local"):
+    if os.path.exists("config.yml"):
         with open("config.yml", "r", encoding="utf-8") as file:
             config = yaml.safe_load(file)
     else:
@@ -315,13 +362,13 @@ if __name__ == "__main__":
         with open("last_sign_in_day.json", "r", encoding="utf-8") as f:
             data = json.load(f)
             last_sign_in_day = datetime.fromisoformat(data["last_sign_in_day"])
-    except FileNotFoundError:
+    except Exception:
         last_sign_in_day = None
     # 获取当前时间
     now = datetime.now()
 
     # 如果当前时间是今天，并且上次签到不是今天，则执行签到
-    if now.date() != last_sign_in_day.date():
+    if (not last_sign_in_day) or (now.date() != last_sign_in_day.date()):
         try:
             # 启动应用程序
             turn2main_page()
@@ -332,7 +379,6 @@ if __name__ == "__main__":
                         key, CLOCK_IN_BBS
                     )
                     if result:
-                        last_sign_in_day = datetime.now()
                         notify_message = f"{notify_message}{key} 签到成功\n"
                     else:
                         notify_message = f"{notify_message}{key} 签到失败\n"
@@ -348,6 +394,7 @@ if __name__ == "__main__":
 
                 except Exception as e:
                     logging.info(e)
+            last_sign_in_day = datetime.now()
             notify_message = notify_message.strip()
             try:
                 send_notify("米游社签到通知", notify_message, config.get("ONEPUSH_CONFIG", []))
@@ -355,6 +402,7 @@ if __name__ == "__main__":
                 pop_up_windows(notify_message)
             # 保存签到日期到磁盘上
             with open("last_sign_in_day.json", "w", encoding="utf-8") as f:
-                json.dump({"last_sign_in_day": last_sign_in_day.isoformat()}, f)
+                if last_sign_in_day:
+                    json.dump({"last_sign_in_day": last_sign_in_day.isoformat()}, f)
         except Exception as e:
             traceback.logging.info_exc()
