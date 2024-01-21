@@ -1,7 +1,7 @@
 import os
 import re
 from datetime import datetime
-from resin_and_signin import send_notify
+from auto_miyoushe_signin import send_notify
 
 import yaml
 
