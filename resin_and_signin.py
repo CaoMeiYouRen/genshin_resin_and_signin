@@ -1,18 +1,14 @@
 import json
 import subprocess
-
 from paddleocr import PaddleOCR
 from datetime import datetime
 import traceback
 import re
-
 import time
 import os
-
-
 import tkinter as tk
+from dotenv import load_dotenv
 
-# 定义截图函数
 
 std_confidence = 0.9
 package_name = "com.mihoyo.hyperion"
@@ -177,17 +173,19 @@ miyoushe_bbs = {
 
 # 米游社的游戏福利签到，兼容 原神、崩坏：星穹铁道、崩坏3 等
 # miyoushe
-def sign_in_by_game_benefits(tab_name, sign_in_bbs=True):
+def sign_in_by_game_benefits(tab_name, clock_in_bbs=True):
     global miyoushe_bbs
+    clock_in_bbs_result = False
     print(f"正在签到 {tab_name}")
 
     handle_pop_up()
     # 切换 tab
     result = match_text_and_click(tab_name)
     if not result:  # 未匹配到文本，跳过执行
-        return False
+        print(f"未检测到 {tab_name} tab，已跳过")
+        return False, False
 
-    if sign_in_bbs:
+    if clock_in_bbs:
         # 如果要米游社论坛签到，则先执行
         # 切换到对应的论坛tab
         bbs_tab_name = miyoushe_bbs[tab_name]
@@ -198,8 +196,10 @@ def sign_in_by_game_benefits(tab_name, sign_in_bbs=True):
             if not result:  # 如果未打卡，则打卡
                 result = match_text_and_click("打卡")
                 if result:
+                    clock_in_bbs_result = True
                     print(f"{tab_name} {bbs_tab_name} 打卡成功！")
             else:
+                clock_in_bbs_result = True
                 print(f"{tab_name} {bbs_tab_name} 已打卡，跳过本次打卡")
 
     # 点击 签到福利页面
@@ -221,11 +221,11 @@ def sign_in_by_game_benefits(tab_name, sign_in_bbs=True):
             if signed_days == now_day:
                 print(f"{tab_name} 已签到，跳过本次执行")
                 adb_back()  # 返回到上一页
-                return True
+                return True, clock_in_bbs_result
         if "请选择角色" in text:
             print(f"{tab_name} 未绑定任何角色，跳过本次签到")
             adb_back()  # 返回到上一页
-            return False
+            return False, clock_in_bbs_result
         if re.search(pattern, text):  # 遍历所有的 第x天
             coordinates = i[0]
             adb_tap_center(coordinates)
@@ -234,9 +234,9 @@ def sign_in_by_game_benefits(tab_name, sign_in_bbs=True):
     for i in result:
         if "签到成功" in i[1][0]:
             adb_back()  # 返回到上一页
-            return True
+            return True, clock_in_bbs_result
     adb_back()  # 返回到上一页
-    return False
+    return False, clock_in_bbs_result
 
 
 def pop_up_windows(str):
@@ -284,9 +284,14 @@ def send_notify(text):
 
 # while True:
 if __name__ == "__main__":
-    # os.system("adb disconnect 127.0.0.1:16384")
-    # TODO 优化adb连接
-    os.system("adb connect 127.0.0.1:16384")
+    if os.path.exists(".env.local"):
+        load_dotenv(".env.local")
+    elif os.path.exists(".env"):
+        load_dotenv(".env")
+
+    ADB_PORT = int(os.environ.get("ADB_PORT") or 16384)
+    CLOCK_IN_BBS = os.environ.get("CLOCK_IN_BBS") == "true"
+    os.system(f"adb connect 127.0.0.1:{ADB_PORT}")
     os.system("adb devices")
     # 检查今天是否已经签到
     # 加载上次签到的日期
@@ -304,15 +309,32 @@ if __name__ == "__main__":
         try:
             # 启动应用程序
             turn2main_page()
+            notify_message = ""
             for key, value in miyoushe_bbs.items():
-                # print(key, value)
-                result = sign_in_by_game_benefits(key, True)
-                if result:
-                    last_sign_in_day = now
                 try:
-                    send_notify(f"{key} 签到成功")
-                except:
-                    pop_up_windows(f"{key} 签到成功")
+                    result, clock_in_bbs_result = sign_in_by_game_benefits(
+                        key, CLOCK_IN_BBS
+                    )
+                    if result:
+                        last_sign_in_day = datetime.now()
+                        notify_message = f"{notify_message}{key} 签到成功\n"
+                    else:
+                        notify_message = f"{notify_message}{key} 签到失败\n"
+
+                    if clock_in_bbs_result:
+                        notify_message = (
+                            f"{notify_message}{key} - {miyoushe_bbs[key]} 打卡成功\n"
+                        )
+                    else:
+                        notify_message = (
+                            f"{notify_message}{key} - {miyoushe_bbs[key]} 打卡失败\n"
+                        )
+                except Exception as e:
+                    print(e)
+            try:
+                send_notify(notify_message)
+            except:
+                pop_up_windows(notify_message)
             # 保存签到日期到磁盘上
             with open("last_sign_in_day.json", "w", encoding="utf-8") as f:
                 json.dump({"last_sign_in_day": last_sign_in_day.isoformat()}, f)
