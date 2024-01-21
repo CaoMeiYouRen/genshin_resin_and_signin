@@ -27,10 +27,13 @@ pip install -r requirements.txt
 1. 复制根目录下的 `config.example.yml` 文件，并改为 `config.yml`
 2. 填写 `ADB_PORT` (必须)、`CLOCK_IN_BBS`(可选)、`ONEPUSH_CONFIG`(可选)。`ADB_PORT` 为要连接的模拟器的 adb 端口，可查询各大模拟器文档获取；`CLOCK_IN_BBS`为是否在对应游戏的米游社打卡，默认为 `true`；`ONEPUSH_CONFIG` 为  [onepush](https://github.com/y1ndan/onepush) 相关配置，请自行了解
 3. 启动已安装好米游社的模拟器
-4. 运行 `python auto_miyoushe_signin.py`
-5. 查看运行结果
+4. 确认 adb 可用。若不可用，请添加 adb 到环境变量
 
-
+   ```sh
+   adb devices
+   ```
+5. 运行 `python auto_miyoushe_signin.py`
+6. 查看运行结果
 
 ## 可能出现的问题
 

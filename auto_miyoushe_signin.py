@@ -81,21 +81,27 @@ def calculate_center(coordinates):
 #     [1279.0, 1293.0],
 #     [1099.0, 1293.0],
 # ]
-def adb_tap_center(coordinates):
+def adb_tap_center(
+    coordinates,
+    sleep_seconds=3,
+):
     x, y = calculate_center(coordinates)
     command = f"adb shell input tap {x} {y}"
     subprocess.run(command, shell=True)
+    time.sleep(sleep_seconds)
 
 
 def adb_back():
     command = "adb shell input keyevent KEYCODE_BACK"
     subprocess.run(command, shell=True)
+    time.sleep(3)
 
 
 # x1, y1, x2, y2
 def adb_swipe(x1, y1, x2, y2):
     command = f"adb shell input swipe {x1} {y1} {x2} {y2}"
     subprocess.run(command, shell=True)
+    time.sleep(3)
 
 
 # 获取截图
@@ -130,18 +136,14 @@ def handle_pop_up():
     for i in result:
         if "我知道了" in i[1][0]:
             adb_tap_center(i[0])
-            time.sleep(3)
         if "下次再说" in i[1][0]:
             adb_tap_center(i[0])
-            time.sleep(3)
         if "确定" in i[1][0]:
             adb_tap_center(i[0])
-            time.sleep(3)
         if "米游社没有响应" in i[1][0]:
             relaunch_APP()
         if "回顶部" in i[1][0]:
             adb_tap_center(i[0])
-            time.sleep(3)
         # if "发现" in i[1][0]:
         #     center = i[0][0]
         #     os.system("adb shell input tap {} {}".format(center[0], center[1]))
@@ -219,8 +221,7 @@ def match_text_and_click(text, sleep_seconds=3, strict=False):
     match_result = match_text_by_OCR_result(text, strict)
     if match_result is None:
         return False
-    adb_tap_center(match_result)
-    time.sleep(sleep_seconds)
+    adb_tap_center(match_result, sleep_seconds)
     return True
 
 
@@ -233,7 +234,7 @@ def sign_in_by_game_benefits(tab_name, clock_in_bbs=True):
 
     handle_pop_up()
     # 切换 tab
-    result = match_text_and_click(tab_name)
+    result = match_text_and_click(tab_name, 8)
     if not result:  # 未匹配到文本，跳过执行
         logging.info(f"未检测到 {tab_name} tab，已跳过")
         return False, False
@@ -242,7 +243,7 @@ def sign_in_by_game_benefits(tab_name, clock_in_bbs=True):
         # 如果要米游社论坛签到，则先执行
         # 切换到对应的论坛tab
         bbs_tab_name = miyoushe_bbs[tab_name]
-        result = match_text_and_click(bbs_tab_name, strict=True)
+        result = match_text_and_click(bbs_tab_name, sleep_seconds=5, strict=True)
         if result:
             # 判断是否已打卡
             result = match_text_by_OCR_result("已打卡")
@@ -256,7 +257,7 @@ def sign_in_by_game_benefits(tab_name, clock_in_bbs=True):
                 logging.info(f"{tab_name} {bbs_tab_name} 已打卡，跳过本次打卡")
 
     # 点击 签到福利页面
-    result = match_text_and_click("签到福利", 5)
+    result = match_text_and_click("签到福利", 8)
     if not result:  # 未匹配到文本，跳过执行
         return False, clock_in_bbs_result
 
@@ -282,7 +283,7 @@ def sign_in_by_game_benefits(tab_name, clock_in_bbs=True):
             return False, clock_in_bbs_result
         if re.search(pattern, text):  # 遍历所有的 第x天
             coordinates = i[0]
-            adb_tap_center(coordinates)
+            adb_tap_center(coordinates, 1)
     time.sleep(3)
     result = get_new_screenshot_OCR_result()
     for i in result:
