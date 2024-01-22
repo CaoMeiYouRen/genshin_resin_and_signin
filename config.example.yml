@@ -1,3 +1,4 @@
+# 要连接的模拟器的 adb 端口
 ADB_PORT: 16384
 # 要签到的游戏
 SIGNIN_GAMES:
@@ -10,6 +11,8 @@ SIGNIN_GAMES:
   - 崩坏学园2
 # 是否在对应的社区打卡
 CLOCK_IN_BBS: true
+# 是否 自动执行 原神的留影叙佳期
+AUTO_BIRTHDAY: true
 ONEPUSH_CONFIG:
   # 钉钉推送
   - notifier: dingtalk

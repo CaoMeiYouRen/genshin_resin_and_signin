@@ -27,11 +27,12 @@ pip install -r requirements.txt
 1. 复制根目录下的 `config.example.yml` 文件，并改为 `config.yml`
 2. 填写配置。
 | 字段           | 是否必须 | 解释                                                         |
-   | -------------- | -------- | ------------------------------------------------------------ |
-   | ADB_PORT       | 必须     | 要连接的模拟器的 adb 端口，可查询各大模拟器文档获取          |
-   | CLOCK_IN_BBS   | 可选     | 是否在对应游戏的米游社打卡，默认为 `true`                    |
-   | ONEPUSH_CONFIG | 可选     | [onepush](https://github.com/y1ndan/onepush) 相关配置，支持企业微信、钉钉等多个推送渠道 |
-   | SIGNIN_GAMES   | 可选     | 要签到的游戏。名称必须和项目中的 `miyoushe_bbs` 的 `key` 一致 |
+| -------------- | -------- | ------------------------------------------------------------ |
+| ADB_PORT       | 必须     | 要连接的模拟器的 adb 端口，可查询各大模拟器文档获取          |
+| CLOCK_IN_BBS   | 可选     | 是否在对应游戏的米游社打卡，默认为 `true`                    |
+| ONEPUSH_CONFIG | 可选     | [onepush](https://github.com/y1ndan/onepush) 相关配置，支持企业微信、钉钉等多个推送渠道 |
+| SIGNIN_GAMES   | 可选     | 要签到的游戏。名称必须和项目中的 `miyoushe_bbs` 的 `key` 一致 |
+| AUTO_BIRTHDAY  | 可选     | 是否自动点击原神的留影叙佳期                                 |
 3. 启动已安装好米游社的模拟器
 
 4. 确认 adb 可用。若不可用，请添加 adb 到环境变量

@@ -24,6 +24,8 @@ miyoushe_bbs = {
     "崩坏学园2": "学园",
 }
 
+notify_message_list = []
+
 
 def notify_me(title, content, notifier, params):
     if not notifier or not params:
@@ -249,31 +251,50 @@ def match_text_and_click(text, sleep_seconds=3, strict=False):
 
 
 # 自动点击 原神 留影叙佳期
-def auto_character_birthday():
+def auto_genshin_character_birthday():
+    global notify_message_list
     logging.info(f"正在执行 留影叙佳期")
     result = match_text_and_click("留影叙佳期", 8)
     if not result:  # 未匹配到文本，跳过执行
         logging.info(f"未检测到 留影叙佳期，已跳过")
         return False
     match_text_and_click("点击进入", 5)  # 确保进入 留影叙佳期 主页
-    match_text_and_click("今天是", 5)
+    pattern = r"今天是(\w+)的生日哦"
+    result = get_new_screenshot_OCR_result()
+    for i in result:
+        text = i[1][0]
+        if "有新的画片收录进来啦" in text:
+            notify_message_list.append("原神 留影叙佳期 已收集，跳过执行 ✅")
+            logging.info(f"留影叙佳期 执行成功")
+            adb_back()
+            return True
+        match = re.search(pattern, text)
+        if match:
+            name = match.group(1)
+            notify_message_list.append(f"今天是 原神 中的角色 {name} 的生日！🎂")
+            adb_tap_center(i[0], 5)
+            break
+
     x, y = get_resolution()
-    for item in range(10):  # 最多点击10次
+    for i in range(10):  # 最多点击10次
         adb_tap(x // 2, y // 2)  # 点击屏幕中间
         time.sleep(3)
         result = match_text_by_OCR_result("保存")
         if result:
-            logging.info(f"留影叙佳期 执行成功！")
+            notify_message_list.append("原神 留影叙佳期 执行成功 ✅")
+            logging.info(f"留影叙佳期 执行成功")
             adb_back()
             return True
+    notify_message_list.append("原神 留影叙佳期 执行失败 ❌")
+    logging.info(f"留影叙佳期 执行失败")
     adb_back()
     return False
 
 
 # 米游社的游戏福利签到，兼容 原神、崩坏：星穹铁道、崩坏3 等
 # miyoushe
-def sign_in_by_game_benefits(tab_name, clock_in_bbs=True):
-    global miyoushe_bbs
+def sign_in_by_game_benefits(tab_name, clock_in_bbs=True, auto_birthday=True):
+    global miyoushe_bbs, notify_message_list
     clock_in_bbs_result = False
     logging.info(f"正在签到 {tab_name}")
 
@@ -298,16 +319,23 @@ def sign_in_by_game_benefits(tab_name, clock_in_bbs=True):
                 result = match_text_and_click("打卡")
                 if result:
                     clock_in_bbs_result = True
-                    logging.info(f"{tab_name} {bbs_tab_name} 打卡成功！")
+                    notify_message_list.append("{tab_name} {bbs_tab_name} 打卡成功 ✅")
+                    logging.info(f"{tab_name} {bbs_tab_name} 打卡成功")
+                else:
+                    notify_message_list.append("{tab_name} {bbs_tab_name} 打卡失败 ❌")
+                    logging.info(f"{tab_name} {bbs_tab_name} 打卡失败")
             else:
                 clock_in_bbs_result = True
+                notify_message_list.append("{tab_name} {bbs_tab_name} 已打卡，跳过本次打卡 ✅")
                 logging.info(f"{tab_name} {bbs_tab_name} 已打卡，跳过本次打卡")
-
+    if auto_birthday and (tab_name == "原神"):
+        auto_genshin_character_birthday()
     # 点击 签到福利页面
     result = match_text_and_click("签到福利", 8) or match_text_and_click(
         "每日签到", 8
     )  # 崩坏学园2 的是“每日签到”
     if not result:  # 未匹配到文本，跳过执行
+        notify_message_list.append("{tab_name} 没有签到福利，已跳过 ✅")
         return False, clock_in_bbs_result
 
     result = get_new_screenshot_OCR_result()
@@ -323,10 +351,12 @@ def sign_in_by_game_benefits(tab_name, clock_in_bbs=True):
             logging.info(f"{tab_name} 已签到天数 {signed_days}；当前日期 {now_day}")
             # 判断是否已签到
             if signed_days == now_day:
+                notify_message_list.append(f"{tab_name} 已签到，跳过本次执行 ✅")
                 logging.info(f"{tab_name} 已签到，跳过本次执行")
                 adb_back()  # 返回到上一页
                 return True, clock_in_bbs_result
         if "请选择角色" in text:
+            notify_message_list.append(f"{tab_name} 未绑定任何角色，跳过本次签到 ⚠️")
             logging.info(f"{tab_name} 未绑定任何角色，跳过本次签到")
             adb_back()  # 返回到上一页
             return False, clock_in_bbs_result
@@ -335,10 +365,11 @@ def sign_in_by_game_benefits(tab_name, clock_in_bbs=True):
             adb_tap_center(coordinates, 3)
             result = match_text_by_OCR_result("签到成功")
             if result:
+                notify_message_list.append(f"{tab_name} 签到成功 ✅")
                 logging.info(f"{tab_name} 签到成功")
                 adb_back()  # 返回到上一页
                 return True, clock_in_bbs_result
-
+    notify_message_list.append(f"{tab_name} 签到失败 ❌")
     logging.info(f"{tab_name} 签到失败")
     adb_back()  # 返回到上一页
     return False, clock_in_bbs_result
@@ -403,6 +434,7 @@ if __name__ == "__main__":
 
     ADB_PORT = config.get("ADB_PORT", 16384)
     CLOCK_IN_BBS = config.get("CLOCK_IN_BBS", True)
+    AUTO_BIRTHDAY = config.get("AUTO_BIRTHDAY", True)
     SIGNIN_GAMES = config.get("SIGNIN_GAMES", [])
     os.system(f"adb connect 127.0.0.1:{ADB_PORT}")
     os.system("adb devices")
@@ -429,30 +461,14 @@ if __name__ == "__main__":
         try:
             # 启动应用程序
             turn2main_page()
-            notify_message = ""
+            notify_message_list.clear()
             for key in SIGNIN_GAMES:
                 try:
-                    result, clock_in_bbs_result = sign_in_by_game_benefits(
-                        key, CLOCK_IN_BBS
-                    )
-                    if result:
-                        notify_message = f"{notify_message}{key} 签到成功\n"
-                    else:
-                        notify_message = f"{notify_message}{key} 签到失败\n"
-
-                    if clock_in_bbs_result:
-                        notify_message = (
-                            f"{notify_message}{key} - {miyoushe_bbs[key]} 打卡成功\n"
-                        )
-                    else:
-                        notify_message = (
-                            f"{notify_message}{key} - {miyoushe_bbs[key]} 打卡失败\n"
-                        )
-
+                    sign_in_by_game_benefits(key, CLOCK_IN_BBS, AUTO_BIRTHDAY)
                 except Exception as e:
                     logging.info(e)
             last_sign_in_day = datetime.now()
-            notify_message = notify_message.strip()
+            notify_message = "\n".join(notify_message_list)
             try:
                 send_notify("米游社签到通知", notify_message, config.get("ONEPUSH_CONFIG", []))
             except:
