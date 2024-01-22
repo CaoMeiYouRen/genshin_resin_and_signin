@@ -173,7 +173,7 @@ def handle_pop_up():
         #     time.sleep(3)
 
 
-def turn2main_page():
+def turn2main_page(first_tab):
     # 启动应用程序
     activity_name = ".main.HyperionMainActivity"
     subprocess.call(
@@ -190,7 +190,9 @@ def turn2main_page():
     # 确保在 首页
     # match_text_and_click("首页", 5)
     # 向右拖动tab，确保签到顺序
-    adb_drag_right_tab()
+    # adb_drag_right_tab()
+    if first_tab:
+        adb_reset_tab(first_tab)
 
 
 # 向右拖动tab
@@ -199,6 +201,14 @@ def adb_drag_right_tab():
     height = get_tab_height()
     adb_swipe(0, height, x, height)
     time.sleep(3)
+    adb_swipe(0, height, x, height)  # 执行两次拖拽
+    time.sleep(3)
+
+
+# 重置 tab 到 最左边的
+def adb_reset_tab(first_tab):
+    adb_drag_right_tab()
+    match_text_and_click(first_tab)
 
 
 def relaunch_APP():
@@ -465,14 +475,14 @@ if __name__ == "__main__":
     if (not last_sign_in_day) or (now.date() != last_sign_in_day.date()):
         try:
             # 启动应用程序
-            turn2main_page()
+            turn2main_page(SIGNIN_GAMES[0])
             notify_message_list.clear()
             for key in SIGNIN_GAMES:
                 try:
                     sign_in_by_game_benefits(key, CLOCK_IN_BBS, AUTO_BIRTHDAY)
                 except Exception as e:
                     logging.info(e)
-            # adb_drag_right_tab()  # 复原 tab
+            adb_reset_tab(SIGNIN_GAMES[0])  # 复原 tab
             last_sign_in_day = datetime.now()
             notify_message = "\n".join(notify_message_list)
             try:
