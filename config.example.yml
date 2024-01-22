@@ -20,7 +20,7 @@ ONEPUSH_CONFIG:
   # 企业微信推送
   - notifier: wechatworkapp
     params:
-      markdown: true
+      markdown: false
       corpid: ""
       corpsecret: ""
       agentid: ""

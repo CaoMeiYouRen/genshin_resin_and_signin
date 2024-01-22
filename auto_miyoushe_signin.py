@@ -248,6 +248,28 @@ def match_text_and_click(text, sleep_seconds=3, strict=False):
     return True
 
 
+# 自动点击 原神 留影叙佳期
+def auto_character_birthday():
+    logging.info(f"正在执行 留影叙佳期")
+    result = match_text_and_click("留影叙佳期", 8)
+    if not result:  # 未匹配到文本，跳过执行
+        logging.info(f"未检测到 留影叙佳期，已跳过")
+        return False
+    match_text_and_click("点击进入", 5)  # 确保进入 留影叙佳期 主页
+    match_text_and_click("今天是", 5)
+    x, y = get_resolution()
+    for item in range(10):  # 最多点击10次
+        adb_tap(x // 2, y // 2)  # 点击屏幕中间
+        time.sleep(3)
+        result = match_text_by_OCR_result("保存")
+        if result:
+            logging.info(f"留影叙佳期 执行成功！")
+            adb_back()
+            return True
+    adb_back()
+    return False
+
+
 # 米游社的游戏福利签到，兼容 原神、崩坏：星穹铁道、崩坏3 等
 # miyoushe
 def sign_in_by_game_benefits(tab_name, clock_in_bbs=True):
