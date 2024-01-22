@@ -190,6 +190,11 @@ def turn2main_page():
     # 确保在 首页
     # match_text_and_click("首页", 5)
     # 向右拖动tab，确保签到顺序
+    adb_drag_right_tab()
+
+
+# 向右拖动tab
+def adb_drag_right_tab():
     x, y = get_resolution()
     height = get_tab_height()
     adb_swipe(0, height, x, height)
@@ -258,7 +263,7 @@ def auto_genshin_character_birthday():
     if not result:  # 未匹配到文本，跳过执行
         logging.info(f"未检测到 留影叙佳期，已跳过")
         return False
-    match_text_and_click("点击进入", 5)  # 确保进入 留影叙佳期 主页
+    match_text_and_click("点击进入", 8)  # 确保进入 留影叙佳期 主页
     pattern = r"今天是(\w+)的生日哦"
     result = get_new_screenshot_OCR_result()
     for i in result:
@@ -441,7 +446,7 @@ if __name__ == "__main__":
     # 修改当前模拟器 分辨率，避免分辨率过高或过低。如果OCR效率较低，可以考虑降低分辨率 1080x1920
     os.system("adb shell wm size 1080x1920")
     # 修改当前模拟器 DPI，解决DPI过高时 tab 栏缩一块了
-    os.system("adb shell wm density 360")
+    os.system("adb shell wm density 320")
     # 创建截图文件夹
     folder_name = "screenshots"
     os.makedirs(folder_name, exist_ok=True)
@@ -467,6 +472,7 @@ if __name__ == "__main__":
                     sign_in_by_game_benefits(key, CLOCK_IN_BBS, AUTO_BIRTHDAY)
                 except Exception as e:
                     logging.info(e)
+            # adb_drag_right_tab()  # 复原 tab
             last_sign_in_day = datetime.now()
             notify_message = "\n".join(notify_message_list)
             try:
