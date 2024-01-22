@@ -48,8 +48,36 @@ pip install -r requirements.txt
 ### 如何每日运行
 
 - 可在`我的电脑`中添加系统任务来每日运行
+
 - 修改脚本实现死循环运行
+
 - 其他方式每日触发脚本运行
+
+- 可参考[以下 bat 脚本](./auto_miyoushe_signin.bat)。实际使用中需移除中文注释，并将 bat 文件放在本项目根目录下。
+
+- ```bat
+  chcp 65001
+  @echo off
+  @REM 请将下面的 VM_PATH 修改为你自己的模拟器的路径，此处以 MuMu 模拟器 12 为例
+  set VM_PATH="D:\Program Files\MuMu\emulator\MuMuPlayer-12.0\shell"
+  @REM 请将 MuMuPlayer.exe 修改 为你自己的模拟器名称
+  start /d %VM_PATH% MuMuPlayer.exe
+  
+  @REM 等待模拟器启动
+  timeout /t 90 /nobreak
+  
+  python auto_miyoushe_signin.py
+  
+  @REM 等待任务执行完毕
+  timeout /t 5 /nobreak
+  
+  @REM 关闭模拟器。请将要关闭的程序名称修改为你自己的模拟器名称
+  taskkill /F /IM MuMuPlayer.exe
+  taskkill /F /IM MuMuVMMHeadless.exe
+  taskkill /F /IM MuMuVMMSVC.exe
+  
+  exit
+  ```
 
 ### 有部分游戏未签到/签到失败
 

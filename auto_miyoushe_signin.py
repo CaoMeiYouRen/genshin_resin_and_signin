@@ -319,14 +319,14 @@ def sign_in_by_game_benefits(tab_name, clock_in_bbs=True, auto_birthday=True):
                 result = match_text_and_click("打卡")
                 if result:
                     clock_in_bbs_result = True
-                    notify_message_list.append("{tab_name} {bbs_tab_name} 打卡成功 ✅")
+                    notify_message_list.append(f"{tab_name} {bbs_tab_name} 打卡成功 ✅")
                     logging.info(f"{tab_name} {bbs_tab_name} 打卡成功")
                 else:
-                    notify_message_list.append("{tab_name} {bbs_tab_name} 打卡失败 ❌")
+                    notify_message_list.append(f"{tab_name} {bbs_tab_name} 打卡失败 ❌")
                     logging.info(f"{tab_name} {bbs_tab_name} 打卡失败")
             else:
                 clock_in_bbs_result = True
-                notify_message_list.append("{tab_name} {bbs_tab_name} 已打卡，跳过本次打卡 ✅")
+                notify_message_list.append(f"{tab_name} {bbs_tab_name} 已打卡，跳过本次打卡 ✅")
                 logging.info(f"{tab_name} {bbs_tab_name} 已打卡，跳过本次打卡")
     if auto_birthday and (tab_name == "原神"):
         auto_genshin_character_birthday()
@@ -335,7 +335,7 @@ def sign_in_by_game_benefits(tab_name, clock_in_bbs=True, auto_birthday=True):
         "每日签到", 8
     )  # 崩坏学园2 的是“每日签到”
     if not result:  # 未匹配到文本，跳过执行
-        notify_message_list.append("{tab_name} 没有签到福利，已跳过 ✅")
+        notify_message_list.append(f"{tab_name} 没有签到福利，已跳过 ✅")
         return False, clock_in_bbs_result
 
     result = get_new_screenshot_OCR_result()

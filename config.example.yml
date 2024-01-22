@@ -17,7 +17,7 @@ ONEPUSH_CONFIG:
   # 钉钉推送
   - notifier: dingtalk
     params:
-      markdown: true
+      markdown: false
       token: ""
       secret: ""
   # 企业微信推送
