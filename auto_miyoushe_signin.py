@@ -477,5 +477,8 @@ if __name__ == "__main__":
             with open("last_sign_in_day.json", "w", encoding="utf-8") as f:
                 if last_sign_in_day:
                     json.dump({"last_sign_in_day": last_sign_in_day.isoformat()}, f)
+                logging.info("米游社签到成功！")
         except Exception as e:
             traceback.logging.info_exc()
+    else:
+        logging.info("今天已经签过到了~")
