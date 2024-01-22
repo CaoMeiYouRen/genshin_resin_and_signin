@@ -268,6 +268,8 @@ def sign_in_by_game_benefits(tab_name, clock_in_bbs=True):
         bbs_tab_name = miyoushe_bbs[tab_name]
         result = match_text_and_click(bbs_tab_name, sleep_seconds=5, strict=True)
         if result:
+            # 处理可能出现的弹窗
+            handle_pop_up()
             # 判断是否已打卡
             result = match_text_by_OCR_result("已打卡")
             if not result:  # 如果未打卡，则打卡
@@ -280,7 +282,9 @@ def sign_in_by_game_benefits(tab_name, clock_in_bbs=True):
                 logging.info(f"{tab_name} {bbs_tab_name} 已打卡，跳过本次打卡")
 
     # 点击 签到福利页面
-    result = match_text_and_click("签到福利", 8)
+    result = match_text_and_click("签到福利", 8) or match_text_and_click(
+        "每日签到", 8
+    )  # 崩坏学园2 的是“每日签到”
     if not result:  # 未匹配到文本，跳过执行
         return False, clock_in_bbs_result
 
@@ -377,6 +381,7 @@ if __name__ == "__main__":
 
     ADB_PORT = config.get("ADB_PORT", 16384)
     CLOCK_IN_BBS = config.get("CLOCK_IN_BBS", True)
+    SIGNIN_GAMES = config.get("SIGNIN_GAMES", [])
     os.system(f"adb connect 127.0.0.1:{ADB_PORT}")
     os.system("adb devices")
     # 修改当前模拟器 分辨率，避免分辨率过高或过低。如果OCR效率较低，可以考虑降低分辨率 1080x1920
@@ -403,7 +408,7 @@ if __name__ == "__main__":
             # 启动应用程序
             turn2main_page()
             notify_message = ""
-            for key, value in miyoushe_bbs.items():
+            for key in SIGNIN_GAMES:
                 try:
                     result, clock_in_bbs_result = sign_in_by_game_benefits(
                         key, CLOCK_IN_BBS

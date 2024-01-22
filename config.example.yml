@@ -1,4 +1,14 @@
 ADB_PORT: 16384
+# 要签到的游戏
+SIGNIN_GAMES:
+  - 原神
+  - 综合
+  - 星穹铁道
+  - 绝区零
+  - 崩坏3
+  - 未定事件簿
+  - 崩坏学园2
+# 是否在对应的社区打卡
 CLOCK_IN_BBS: true
 ONEPUSH_CONFIG:
   # 钉钉推送
