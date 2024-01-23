@@ -13,16 +13,10 @@ from auto_miyoushe_signin import (
     send_notify,
 )
 
-import yaml
-
-from paddleocr import PaddleOCR
 import logging
 import logreset
 
 
-# def get_screenshot():
-#     os.system("adb shell screencap -p /sdcard/screen.png")
-#     os.system("adb pull /sdcard/screen.png .")
 if __name__ == "__main__":
     logreset.reset_logging()  # before you logging setting
     # 使用logging模块配置日志输出格式和级别
@@ -36,8 +30,12 @@ if __name__ == "__main__":
     # os.system("adb shell wm density 240")
     # print("开始识别")
     # screenshot_path = get_screenshot()
-    # result = get_OCR_result(screenshot_path)
+    screenshot_path = "./screenshots/screen.png"
+    for item in range(5):
+        result = get_OCR_result(screenshot_path)
     # print(f"result: {result}")
+    # with open("data.json", "w", encoding="utf-8") as file:
+    # json.dump(result, file, ensure_ascii=False)
     # pattern = r"(\d+)月已累计签到(\d+)天"
     # for i in result:
     #     text = i[1][0]
@@ -50,8 +48,7 @@ if __name__ == "__main__":
     #         print(i)
     #     # if "签到福利" in i[1][0]:
     #     #     logging.info(i)
-    # with open("data.json", "w", encoding="utf-8") as file:
-    #     json.dump(result, file, ensure_ascii=False)
+
     # last_sign_in_day = datetime.now().isoformat()
     # data = {"last_sign_in_day": last_sign_in_day}
     # with open("last_sign_in_day.json", "w", encoding="utf-8") as f:
