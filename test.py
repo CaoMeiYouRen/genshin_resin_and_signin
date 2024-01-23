@@ -29,18 +29,22 @@ if __name__ == "__main__":
     # os.system("adb shell wm size 720x1280")
     # os.system("adb shell wm density 240")
     # print("开始识别")
-    # screenshot_path = get_screenshot()
-    screenshot_path = "./screenshots/screen.png"
-    for item in range(5):
-        result = get_OCR_result(screenshot_path)
+    screenshot_path = get_screenshot()
+    # screenshot_path = "./screenshots/screen.png"
+    # for item in range(5):
+    #     result = get_OCR_result(screenshot_path)
     # print(f"result: {result}")
     # with open("data.json", "w", encoding="utf-8") as file:
     # json.dump(result, file, ensure_ascii=False)
     # pattern = r"(\d+)月已累计签到(\d+)天"
-    # for i in result:
-    #     text = i[1][0]
-    #     match = re.search(pattern, text)
-    #     if match:
+    result = get_OCR_result(screenshot_path)
+    pattern = r"今天是(\w+)的生日哦"
+    for i in result:
+        text = i[1][0]
+        match = re.search(pattern, text)
+        if match:
+            name = match.group(1)
+            logging.info(f"今天是 原神 中的角色 {name} 的生日！🎂")
     #         signed_days = match.group(2)
     #         logging.info(f"已签到天数 {signed_days}")
     # #         now = datetime.now().day
