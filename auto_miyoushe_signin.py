@@ -342,7 +342,7 @@ def sign_in_by_game_benefits(tab_name, clock_in_bbs=True, auto_birthday=True):
         # 切换到对应的论坛tab
         bbs_tab_name = miyoushe_bbs[tab_name]
         result = match_text_and_click(
-            bbs_tab_name, sleep_seconds=5, strict=True, cache=True
+            bbs_tab_name, sleep_seconds=5, strict=True
         )  # 可以复用识别结果
         if result:
             # 处理可能出现的弹窗
