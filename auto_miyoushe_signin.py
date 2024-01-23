@@ -26,6 +26,10 @@ miyoushe_bbs = {
 
 notify_message_list = []
 
+tab_height = 0
+
+result_cache = None
+
 
 def notify_me(title, content, notifier, params):
     if not notifier or not params:
@@ -106,7 +110,7 @@ def calculate_center(coordinates):
 # ]
 def adb_tap_center(
     coordinates,
-    sleep_seconds=3,
+    sleep_seconds=2,
 ):
     x, y = calculate_center(coordinates)
     command = f"adb shell input tap {x} {y}"
@@ -124,7 +128,7 @@ def adb_back():
 def adb_swipe(x1, y1, x2, y2):
     command = f"adb shell input swipe {x1} {y1} {x2} {y2}"
     subprocess.run(command, shell=True)
-    time.sleep(3)
+    time.sleep(2)
 
 
 # 获取截图
@@ -142,12 +146,16 @@ def get_screenshot():
 
 # 获取 tab 的高度
 def get_tab_height():
+    global tab_height
+    if tab_height:
+        return tab_height
     result = get_new_screenshot_OCR_result()
     tabs = miyoushe_bbs.keys()
     for i in result:
         text = i[1][0]
         if text in tabs:
             x, y = calculate_center(i[0])
+            tab_height = y
             return y
     return 0
 
@@ -200,9 +208,9 @@ def adb_drag_right_tab():
     x, y = get_resolution()
     height = get_tab_height()
     adb_swipe(0, height, x, height)
-    time.sleep(3)
+    time.sleep(1)
     adb_swipe(0, height, x, height)  # 执行两次拖拽
-    time.sleep(3)
+    time.sleep(1)
 
 
 # 重置 tab 到 最左边的
@@ -219,18 +227,28 @@ def relaunch_APP():
     time.sleep(3)
 
 
-def get_OCR_result(screenshot_path):
+def get_OCR_result(screenshot_path, cache=False):
+    global result_cache
+    if cache:
+        return result_cache
+    start = datetime.now()
     ocr = PaddleOCR(
-        use_angle_cls=True, lang="ch", show_log=False
+        use_angle_cls=True, lang="ch", show_log=False, use_gpu=True
     )  # need to run only once to download and load model into memory
     result = ocr.ocr(screenshot_path, cls=False)
     result = result[0]
-
+    end = datetime.now()
+    diff = round(end.timestamp() - start.timestamp(), 3)
+    logging.info(f"识别耗时：{diff} s")
+    result_cache = result
     return result
 
 
 # 获取最新截图，并返回识别结果
-def get_new_screenshot_OCR_result():
+def get_new_screenshot_OCR_result(cache=False):
+    global result_cache
+    if cache:
+        return result_cache
     screenshot_path = get_screenshot()
     result = get_OCR_result(screenshot_path)
     return result
@@ -250,15 +268,15 @@ def match_text_by_result(result, text, strict=False):
 
 
 # 获取最新截图，并匹配文本，返回文本的坐标
-def match_text_by_OCR_result(text, strict=False):
-    result = get_new_screenshot_OCR_result()
+def match_text_by_OCR_result(text, strict=False, cache=False):
+    result = get_new_screenshot_OCR_result(cache)
     match_result = match_text_by_result(result, text, strict)
     return match_result
 
 
 # 获取最新截图，匹配文本及点击
-def match_text_and_click(text, sleep_seconds=3, strict=False):
-    match_result = match_text_by_OCR_result(text, strict)
+def match_text_and_click(text, sleep_seconds=3, strict=False, cache=False):
+    match_result = match_text_by_OCR_result(text, strict, cache)
     if match_result is None:
         return False
     adb_tap_center(match_result, sleep_seconds)
@@ -269,11 +287,11 @@ def match_text_and_click(text, sleep_seconds=3, strict=False):
 def auto_genshin_character_birthday():
     global notify_message_list
     logging.info(f"正在执行 留影叙佳期")
-    result = match_text_and_click("留影叙佳期", 8)
+    result = match_text_and_click("留影叙佳期", 8, cache=True)  # 可以复用识别结果
     if not result:  # 未匹配到文本，跳过执行
         logging.info(f"未检测到 留影叙佳期，已跳过")
         return False
-    match_text_and_click("点击进入", 8)  # 确保进入 留影叙佳期 主页
+    match_text_and_click("点击进入", 3)  # 确保进入 留影叙佳期 主页
     pattern = r"今天是(\w+)的生日哦"
     result = get_new_screenshot_OCR_result()
     for i in result:
@@ -293,7 +311,7 @@ def auto_genshin_character_birthday():
     x, y = get_resolution()
     for i in range(10):  # 最多点击10次
         adb_tap(x // 2, y // 2)  # 点击屏幕中间
-        time.sleep(3)
+        time.sleep(2)
         result = match_text_by_OCR_result("保存")
         if result:
             notify_message_list.append("原神 留影叙佳期 执行成功 ✅")
@@ -310,7 +328,6 @@ def auto_genshin_character_birthday():
 # miyoushe
 def sign_in_by_game_benefits(tab_name, clock_in_bbs=True, auto_birthday=True):
     global miyoushe_bbs, notify_message_list
-    clock_in_bbs_result = False
     logging.info(f"正在签到 {tab_name}")
 
     handle_pop_up()
@@ -324,34 +341,34 @@ def sign_in_by_game_benefits(tab_name, clock_in_bbs=True, auto_birthday=True):
         # 如果要米游社论坛签到，则先执行
         # 切换到对应的论坛tab
         bbs_tab_name = miyoushe_bbs[tab_name]
-        result = match_text_and_click(bbs_tab_name, sleep_seconds=5, strict=True)
+        result = match_text_and_click(
+            bbs_tab_name, sleep_seconds=5, strict=True, cache=True
+        )  # 可以复用识别结果
         if result:
             # 处理可能出现的弹窗
             handle_pop_up()
             # 判断是否已打卡
             result = match_text_by_OCR_result("已打卡")
             if not result:  # 如果未打卡，则打卡
-                result = match_text_and_click("打卡")
+                result = match_text_and_click("打卡", cache=True)  # 复用识别结果
                 if result:
-                    clock_in_bbs_result = True
                     notify_message_list.append(f"{tab_name} {bbs_tab_name} 打卡成功 ✅")
                     logging.info(f"{tab_name} {bbs_tab_name} 打卡成功")
                 else:
                     notify_message_list.append(f"{tab_name} {bbs_tab_name} 打卡失败 ❌")
                     logging.info(f"{tab_name} {bbs_tab_name} 打卡失败")
             else:
-                clock_in_bbs_result = True
                 notify_message_list.append(f"{tab_name} {bbs_tab_name} 已打卡，跳过本次打卡 ✅")
                 logging.info(f"{tab_name} {bbs_tab_name} 已打卡，跳过本次打卡")
     if auto_birthday and (tab_name == "原神"):
         auto_genshin_character_birthday()
     # 点击 签到福利页面
     result = match_text_and_click("签到福利", 8) or match_text_and_click(
-        "每日签到", 8
+        "每日签到", 8, cache=True  # 复用识别结果
     )  # 崩坏学园2 的是“每日签到”
     if not result:  # 未匹配到文本，跳过执行
         notify_message_list.append(f"{tab_name} 没有签到福利，已跳过 ✅")
-        return False, clock_in_bbs_result
+        return False
 
     result = get_new_screenshot_OCR_result()
 
@@ -369,25 +386,26 @@ def sign_in_by_game_benefits(tab_name, clock_in_bbs=True, auto_birthday=True):
                 notify_message_list.append(f"{tab_name} 已签到，跳过本次执行 ✅")
                 logging.info(f"{tab_name} 已签到，跳过本次执行")
                 adb_back()  # 返回到上一页
-                return True, clock_in_bbs_result
+                return True
         if "请选择角色" in text:
             notify_message_list.append(f"{tab_name} 未绑定任何角色，跳过本次签到 ⚠️")
             logging.info(f"{tab_name} 未绑定任何角色，跳过本次签到")
             adb_back()  # 返回到上一页
-            return False, clock_in_bbs_result
+            return False
         if re.search(pattern, text):  # 遍历所有的 第x天
             coordinates = i[0]
-            adb_tap_center(coordinates, 3)
-            result = match_text_by_OCR_result("签到成功")
-            if result:
-                notify_message_list.append(f"{tab_name} 签到成功 ✅")
-                logging.info(f"{tab_name} 签到成功")
-                adb_back()  # 返回到上一页
-                return True, clock_in_bbs_result
+            adb_tap_center(coordinates, 0)
+    time.sleep(3)
+    result = match_text_by_OCR_result("签到成功")
+    if result:
+        notify_message_list.append(f"{tab_name} 签到成功 ✅")
+        logging.info(f"{tab_name} 签到成功")
+        adb_back()  # 返回到上一页
+        return True
     notify_message_list.append(f"{tab_name} 签到失败 ❌")
     logging.info(f"{tab_name} 签到失败")
     adb_back()  # 返回到上一页
-    return False, clock_in_bbs_result
+    return False
 
 
 def pop_up_windows(str):
@@ -453,10 +471,10 @@ if __name__ == "__main__":
     SIGNIN_GAMES = config.get("SIGNIN_GAMES", [])
     os.system(f"adb connect 127.0.0.1:{ADB_PORT}")
     os.system("adb devices")
-    # 修改当前模拟器 分辨率，避免分辨率过高或过低。如果OCR效率较低，可以考虑降低分辨率 1080x1920
-    os.system("adb shell wm size 1080x1920")
-    # 修改当前模拟器 DPI，解决DPI过高时 tab 栏缩一块了
-    os.system("adb shell wm density 320")
+    # 修改当前模拟器 分辨率，避免分辨率过高或过低。如果OCR效率较低，可以考虑降低分辨率 1080x1920 720x1280
+    os.system("adb shell wm size 720x1280")
+    # 修改当前模拟器 DPI，解决DPI过高时 tab 栏缩一块了 320 240
+    os.system("adb shell wm density 240")
     # 创建截图文件夹
     folder_name = "screenshots"
     os.makedirs(folder_name, exist_ok=True)

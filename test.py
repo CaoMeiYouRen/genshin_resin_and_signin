@@ -4,6 +4,7 @@ import re
 from datetime import datetime
 import subprocess
 from auto_miyoushe_signin import (
+    adb_reset_tab,
     adb_swipe,
     get_OCR_result,
     get_resolution,
@@ -28,11 +29,14 @@ if __name__ == "__main__":
     logging.basicConfig(
         format="%(asctime)s - %(levelname)s - %(message)s", level="INFO"
     )
-    folder_name = "screenshots"
-    os.makedirs(folder_name, exist_ok=True)
+    # folder_name = "screenshots"
+    # os.makedirs(folder_name, exist_ok=True)
+    # os.system(f"adb connect 127.0.0.1:16384")
+    # os.system("adb shell wm size 720x1280")
+    # os.system("adb shell wm density 240")
     # print("开始识别")
-    screenshot_path = get_screenshot()
-    result = get_OCR_result(screenshot_path)
+    # screenshot_path = get_screenshot()
+    # result = get_OCR_result(screenshot_path)
     # print(f"result: {result}")
     # pattern = r"(\d+)月已累计签到(\d+)天"
     # for i in result:
@@ -46,8 +50,8 @@ if __name__ == "__main__":
     #         print(i)
     #     # if "签到福利" in i[1][0]:
     #     #     logging.info(i)
-    with open("data.json", "w", encoding="utf-8") as file:
-        json.dump(result, file, ensure_ascii=False)
+    # with open("data.json", "w", encoding="utf-8") as file:
+    #     json.dump(result, file, ensure_ascii=False)
     # last_sign_in_day = datetime.now().isoformat()
     # data = {"last_sign_in_day": last_sign_in_day}
     # with open("last_sign_in_day.json", "w", encoding="utf-8") as f:
@@ -88,3 +92,4 @@ if __name__ == "__main__":
     # logging.info(f"height: {height}")
     # adb_swipe(0, height, x // 2, height)
     # adb_swipe(0, 116, x // 2, 116)
+    # adb_reset_tab("原神")
