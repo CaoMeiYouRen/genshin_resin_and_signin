@@ -26,6 +26,8 @@ miyoushe_bbs = {
 
 notify_message_list = []
 
+multiple_characters = False
+
 
 def notify_me(title, content, notifier, params):
     if not notifier or not params:
@@ -282,21 +284,24 @@ def match_text_and_click(text, sleep_seconds=3, strict=False):
 
 # 自动点击 原神 留影叙佳期
 def auto_genshin_character_birthday():
-    global notify_message_list
+    global notify_message_list, multiple_characters
     logging.info(f"正在执行 留影叙佳期")
     result = match_text_and_click("留影叙佳期", 8)  # 可以复用识别结果
     if not result:  # 未匹配到文本，跳过执行
         logging.info(f"未检测到 留影叙佳期，已跳过")
         return False
     result = match_text_and_click("点击进入", 8)  # 确保进入 留影叙佳期 主页
-    if not result:
-        logging.info(f"进入 留影叙佳期 页面失败，已跳过")
-        return False
-    pattern = r"今天是(\w+)的生日哦"
+    # if not result:
+    #     logging.info(f"进入 留影叙佳期 页面失败，已跳过")
+    #     return False
+    pattern = r"今天是(\w+)的生日"
+    pattern2 = r"接下来我们去为(\w+)庆祝吧"
     result = get_new_screenshot_OCR_result()
     if not result:
         logging.info(f"进入 留影叙佳期 页面失败，已跳过")
         return False
+    x, y = get_resolution()
+    name = ""
     for i in result:
         text = i[1][0]
         if "有新的画片收录进来啦" in text:
@@ -310,16 +315,36 @@ def auto_genshin_character_birthday():
             name = match.group(1)
             notify_message_list.append(f"今天是 原神 中的角色 {name} 的生日！🎂")
             logging.info(f"今天是 原神 中的角色 {name} 的生日！")
+            if "和" in name:
+                # 有两个角色
+                multiple_characters = True
+                names = name.split("和")
+                name = names[0]
+                logging.info(f"正在执行 {name} 的留影叙佳期")
+                result = match_text_and_click(name, 5, True)
+                if not result:
+                    notify_message_list.append("原神 留影叙佳期 执行失败 ❌")
+                    logging.info(f"留影叙佳期 执行失败")
+                    adb_back()
+                    return False
+            else:
+                logging.info(f"正在执行 {name} 的留影叙佳期")
+                adb_tap_center(i[0], 5)
+            break
+        match = re.search(pattern2, text)  # 点击第二个角色
+        if match:
+            name = match.group(1)
+            notify_message_list.append(f"今天是 原神 中的角色 {name} 的生日！🎂")
+            logging.info(f"今天是 原神 中的角色 {name} 的生日！")
             adb_tap_center(i[0], 5)
             break
-
     x, y = get_resolution()
     for i in range(10):  # 最多点击10次
         adb_tap(x // 2, y // 2)  # 点击屏幕中间
         time.sleep(5)
         result = match_text_by_OCR_result("保存")
         if result:
-            notify_message_list.append("原神 留影叙佳期 执行成功 ✅")
+            notify_message_list.append("原神 留影叙佳期 {name} 的生日 执行成功 ✅")
             logging.info(f"留影叙佳期 执行成功")
             adb_back()
             return True
@@ -332,7 +357,7 @@ def auto_genshin_character_birthday():
 # 米游社的游戏福利签到，兼容 原神、崩坏：星穹铁道、崩坏3 等
 # miyoushe
 def sign_in_by_game_benefits(tab_name, clock_in_bbs=True, auto_birthday=True):
-    global miyoushe_bbs, notify_message_list
+    global miyoushe_bbs, notify_message_list, multiple_characters
     logging.info(f"正在签到 {tab_name}")
 
     handle_pop_up()
@@ -365,6 +390,8 @@ def sign_in_by_game_benefits(tab_name, clock_in_bbs=True, auto_birthday=True):
                 logging.info(f"{tab_name} {bbs_tab_name} 已打卡，跳过本次打卡")
     if auto_birthday and (tab_name == "原神"):
         auto_genshin_character_birthday()
+        if multiple_characters:
+            auto_genshin_character_birthday()  # 有两个角色的时候再执行一遍
     # 点击 签到福利页面
     result = match_text_and_click("签到福利", 8) or match_text_and_click(
         "每日签到",

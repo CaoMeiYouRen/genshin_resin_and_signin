@@ -34,11 +34,12 @@ if __name__ == "__main__":
     # for item in range(5):
     #     result = get_OCR_result(screenshot_path)
     # print(f"result: {result}")
-    # with open("data.json", "w", encoding="utf-8") as file:
-    # json.dump(result, file, ensure_ascii=False)
+
     # pattern = r"(\d+)月已累计签到(\d+)天"
     result = get_OCR_result(screenshot_path)
-    pattern = r"今天是(\w+)的生日哦"
+    with open("data.json", "w", encoding="utf-8") as file:
+        json.dump(result, file, ensure_ascii=False)
+    pattern = r"今天是(\w+)的生日"
     for i in result:
         text = i[1][0]
         match = re.search(pattern, text)
