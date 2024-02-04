@@ -386,7 +386,9 @@ def sign_in_by_game_benefits(tab_name, clock_in_bbs=True, auto_birthday=True):
                     notify_message_list.append(f"{tab_name} {bbs_tab_name} 打卡失败 ❌")
                     logging.info(f"{tab_name} {bbs_tab_name} 打卡失败")
             else:
-                notify_message_list.append(f"{tab_name} {bbs_tab_name} 已打卡，跳过本次打卡 ✅")
+                notify_message_list.append(
+                    f"{tab_name} {bbs_tab_name} 已打卡，跳过本次打卡 ✅"
+                )
                 logging.info(f"{tab_name} {bbs_tab_name} 已打卡，跳过本次打卡")
     if auto_birthday and (tab_name == "原神"):
         auto_genshin_character_birthday()
@@ -423,6 +425,10 @@ def sign_in_by_game_benefits(tab_name, clock_in_bbs=True, auto_birthday=True):
             logging.info(f"{tab_name} 未绑定任何角色，跳过本次签到")
             adb_back()  # 返回到上一页
             return False
+        if text in "累签活动":
+            x, y = calculate_center(i[0])
+            # 如果有累签活动，则向上拖动一定距离，让签到区域可以展示出来
+            adb_swipe(x, y, x, 0)
         if re.search(pattern, text):  # 遍历所有的 第x天
             coordinates = i[0]
             adb_tap_center(coordinates, 2)
@@ -534,7 +540,9 @@ if __name__ == "__main__":
             last_sign_in_day = datetime.now()
             notify_message = "\n".join(notify_message_list)
             try:
-                send_notify("米游社签到通知", notify_message, config.get("ONEPUSH_CONFIG", []))
+                send_notify(
+                    "米游社签到通知", notify_message, config.get("ONEPUSH_CONFIG", [])
+                )
             except:
                 pop_up_windows(notify_message)
             # 保存签到日期到磁盘上

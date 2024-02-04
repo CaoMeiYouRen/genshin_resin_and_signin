@@ -6,6 +6,7 @@ import subprocess
 from auto_miyoushe_signin import (
     adb_reset_tab,
     adb_swipe,
+    calculate_center,
     get_OCR_result,
     get_resolution,
     get_screenshot,
@@ -25,7 +26,7 @@ if __name__ == "__main__":
     )
     # folder_name = "screenshots"
     # os.makedirs(folder_name, exist_ok=True)
-    # os.system(f"adb connect 127.0.0.1:16384")
+    os.system(f"adb connect 127.0.0.1:16384")
     # os.system("adb shell wm size 720x1280")
     # os.system("adb shell wm density 240")
     # print("开始识别")
@@ -39,13 +40,17 @@ if __name__ == "__main__":
     result = get_OCR_result(screenshot_path)
     with open("data.json", "w", encoding="utf-8") as file:
         json.dump(result, file, ensure_ascii=False)
-    pattern = r"今天是(\w+)的生日"
+    # pattern = r"今天是(\w+)的生日"
     for i in result:
         text = i[1][0]
-        match = re.search(pattern, text)
-        if match:
-            name = match.group(1)
-            logging.info(f"今天是 原神 中的角色 {name} 的生日！🎂")
+        if text in "累签活动":
+            x, y = calculate_center(i[0])
+            logging.info(f"中心点：{x}, {y}")
+            adb_swipe(x, y, x, 0)
+        # match = re.search(pattern, text)
+        # if match:
+        #     name = match.group(1)
+        #     logging.info(f"今天是 原神 中的角色 {name} 的生日！🎂")
     #         signed_days = match.group(2)
     #         logging.info(f"已签到天数 {signed_days}")
     # #         now = datetime.now().day
