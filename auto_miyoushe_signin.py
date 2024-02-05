@@ -404,10 +404,17 @@ def sign_in_by_game_benefits(tab_name, clock_in_bbs=True, auto_birthday=True):
         return False
 
     result = get_new_screenshot_OCR_result()
+    calculate = match_text_by_result(result, "累签活动")
+    if calculate:
+        x, y = calculate_center(calculate)
+        # 如果有累签活动，则向上拖动一定距离，让签到区域可以展示出来
+        adb_swipe(x, y, x, 0)
+        result = get_new_screenshot_OCR_result()
 
     pattern = r"第\d+天"
     pattern_sign = r"(\d+)月已累计签到(\d+)天"
     now_day = datetime.now().day
+
     for i in result:
         text = i[1][0]
         match = re.search(pattern_sign, text)  # 判断已签到天数
@@ -425,10 +432,7 @@ def sign_in_by_game_benefits(tab_name, clock_in_bbs=True, auto_birthday=True):
             logging.info(f"{tab_name} 未绑定任何角色，跳过本次签到")
             adb_back()  # 返回到上一页
             return False
-        if text in "累签活动":
-            x, y = calculate_center(i[0])
-            # 如果有累签活动，则向上拖动一定距离，让签到区域可以展示出来
-            adb_swipe(x, y, x, 0)
+
         if re.search(pattern, text):  # 遍历所有的 第x天
             coordinates = i[0]
             adb_tap_center(coordinates, 2)

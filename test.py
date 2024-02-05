@@ -43,7 +43,7 @@ if __name__ == "__main__":
     # pattern = r"今天是(\w+)的生日"
     for i in result:
         text = i[1][0]
-        if text in "累签活动":
+        if "累签活动" in text:
             x, y = calculate_center(i[0])
             logging.info(f"中心点：{x}, {y}")
             adb_swipe(x, y, x, 0)
