@@ -221,29 +221,26 @@ def relaunch_APP():
     time.sleep(3)
 
 
-global_ocr = None
-
-
 def get_OCR_result(screenshot_path):
-    global global_ocr
-    start = datetime.now()
-    if global_ocr:
-        ocr = global_ocr
-    else:
-        ocr = PaddleOCR(
-            use_angle_cls=False,
-            lang="ch",
-            show_log=False,
-            use_gpu=False,
-            use_tensorrt=True,
-            # det_max_side_len=1280,
-        )  # need to run only once to download and load model into memory
-    result = ocr.ocr(screenshot_path, cls=False)
-    result = result[0]
-    end = datetime.now()
-    diff = round(end.timestamp() - start.timestamp(), 3)
-    logging.info(f"识别耗时：{diff} s")
-    return result
+    for item in range(3):
+        try:
+            start = datetime.now()
+            ocr = PaddleOCR(
+                use_angle_cls=False,
+                lang="ch",
+                show_log=False,
+                use_gpu=False,
+                use_tensorrt=True,
+                # det_max_side_len=1280,
+            )  # need to run only once to download and load model into memory
+            result = ocr.ocr(screenshot_path, cls=False)
+            result = result[0]
+            end = datetime.now()
+            diff = round(end.timestamp() - start.timestamp(), 3)
+            logging.info(f"识别耗时：{diff} s")
+            return result
+        except Exception as e:
+            logging.error(f"{str(e)}")
 
 
 # 获取最新截图，并返回识别结果
