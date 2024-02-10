@@ -341,7 +341,7 @@ def auto_genshin_character_birthday():
         time.sleep(5)
         result = match_text_by_OCR_result("保存")
         if result:
-            notify_message_list.append("原神 留影叙佳期 {name} 的生日 执行成功 ✅")
+            notify_message_list.append(f"原神 留影叙佳期 {name} 的生日 执行成功 ✅")
             logging.info(f"留影叙佳期 执行成功")
             adb_back()
             return True
