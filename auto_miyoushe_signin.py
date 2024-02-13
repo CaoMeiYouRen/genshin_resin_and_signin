@@ -389,8 +389,12 @@ def sign_in_by_game_benefits(tab_name, clock_in_bbs=True, auto_birthday=True):
                 logging.info(f"{tab_name} {bbs_tab_name} 已打卡，跳过本次打卡")
     if auto_birthday and (tab_name == "原神"):
         auto_genshin_character_birthday()
+        # 处理可能出现的弹窗
+        handle_pop_up()
         if multiple_characters:
             auto_genshin_character_birthday()  # 有两个角色的时候再执行一遍
+            # 处理可能出现的弹窗
+            handle_pop_up()
     # 点击 签到福利页面
     result = match_text_and_click("签到福利", 8) or match_text_and_click(
         "每日签到",
