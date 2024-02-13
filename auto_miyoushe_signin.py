@@ -335,7 +335,7 @@ def auto_genshin_character_birthday():
             logging.info(f"今天是 原神 中的角色 {name} 的生日！")
             adb_tap_center(i[0], 5)
             break
-    x, y = get_resolution()
+    # x, y = get_resolution()
     for i in range(10):  # 最多点击10次
         adb_tap(x // 2, y // 2)  # 点击屏幕中间
         time.sleep(5)
