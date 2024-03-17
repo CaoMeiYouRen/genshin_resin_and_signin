@@ -17,6 +17,7 @@ package_name = "com.mihoyo.hyperion"
 miyoushe_bbs = {
     "原神": "酒馆",
     "综合": "ACG",
+    "大别野": "ACG",
     "星穹铁道": "候车室",
     "绝区零": "咖啡馆",
     "崩坏3": "甲板",
