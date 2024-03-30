@@ -176,7 +176,20 @@ def handle_pop_up():
         #     time.sleep(3)
 
 
-def turn2main_page(first_tab):
+# 校验是否白屏
+def verify_screen(maxTime: int = 3):
+    texts = ["我知道了", "下次再说", "确定", "回顶部", "发现"]
+    for _ in range(maxTime):
+        result = get_new_screenshot_OCR_result()
+        if result:
+            for text in texts:
+                if match_text_by_result(result, text):
+                    return True
+        time.sleep(3)
+    return False
+
+
+def turn2main_page(first_tab, config=None):
     # 启动应用程序
     activity_name = ".main.HyperionMainActivity"
     subprocess.call(
@@ -189,7 +202,10 @@ def turn2main_page(first_tab):
             f"{package_name}/{package_name + activity_name}",
         ]
     )
-    time.sleep(8)
+    if not verify_screen(10):
+        if config:
+            send_notify("米游社签到通知", "签到失败！米游社无法正常启动！", config)
+        return
     # 确保在 首页
     # match_text_and_click("首页", 5)
     # 向右拖动tab，确保签到顺序
