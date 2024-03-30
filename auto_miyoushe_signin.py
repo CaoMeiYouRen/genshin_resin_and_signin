@@ -208,7 +208,7 @@ def turn2main_page(first_tab):
             "签到失败！米游社无法正常启动！",
             config.get("ONEPUSH_CONFIG", []),
         )
-        return
+        exit(1)
     # 确保在 首页
     # match_text_and_click("首页", 5)
     # 向右拖动tab，确保签到顺序
