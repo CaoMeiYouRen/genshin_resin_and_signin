@@ -189,7 +189,7 @@ def verify_screen(maxTime: int = 3):
     return False
 
 
-def turn2main_page(first_tab, config=None):
+def turn2main_page(first_tab):
     # 启动应用程序
     activity_name = ".main.HyperionMainActivity"
     subprocess.call(
@@ -203,8 +203,11 @@ def turn2main_page(first_tab, config=None):
         ]
     )
     if not verify_screen(10):
-        if config:
-            send_notify("米游社签到通知", "签到失败！米游社无法正常启动！", config)
+        send_notify(
+            "米游社签到通知",
+            "签到失败！米游社无法正常启动！",
+            config.get("ONEPUSH_CONFIG", []),
+        )
         return
     # 确保在 首页
     # match_text_and_click("首页", 5)
@@ -504,6 +507,8 @@ def pop_up_windows(str):
 # 推送消息
 def send_notify(title, text, config):
     logging.info(f"{title}\n{text}")
+    if not config:
+        return
     for item in config:
         response = notify_me(title, text, item["notifier"], item["params"])
         logging.info(response.text)
