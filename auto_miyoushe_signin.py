@@ -164,7 +164,7 @@ def handle_pop_up():
             adb_tap_center(i[0])
         if "下次再说" in i[1][0]:
             adb_tap_center(i[0])
-        if "确定" in i[1][0]:
+        if "确定" == i[1][0]:
             adb_tap_center(i[0])
         if "米游社没有响应" in i[1][0]:
             relaunch_APP()
