@@ -178,7 +178,7 @@ def handle_pop_up():
 
 # 校验是否白屏
 def verify_screen(maxTime: int = 3):
-    texts = ["我知道了", "下次再说", "确定", "回顶部", "发现"]
+    texts = ["我知道了", "下次再说", "确定", "回顶部", "发现", "每日签到"]
     for _ in range(maxTime):
         result = get_new_screenshot_OCR_result()
         if result:
@@ -202,6 +202,7 @@ def turn2main_page(first_tab):
             f"{package_name}/{package_name + activity_name}",
         ]
     )
+    # 校验是否白屏
     if not verify_screen(10):
         send_notify(
             "米游社签到通知",
@@ -420,8 +421,15 @@ def sign_in_by_game_benefits(tab_name, clock_in_bbs=True, auto_birthday=True):
         "每日签到",
         8,
     )  # 崩坏学园2 的是“每日签到”
+    # 校验是否白屏
+    if not verify_screen(10):
+        notify_message_list.append(f"{tab_name} {bbs_tab_name} 签到失败 ❌")
+        logging.info(f"{tab_name} {bbs_tab_name} 签到失败")
+        adb_back()  # 返回到上一页
+        return False
     if not result:  # 未匹配到文本，跳过执行
         notify_message_list.append(f"{tab_name} 没有签到福利，已跳过 ✅")
+        adb_back()  # 返回到上一页
         return False
 
     result = get_new_screenshot_OCR_result()
