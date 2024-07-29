@@ -6,11 +6,13 @@ import traceback
 import re
 import time
 import os
+import cv2
 import tkinter as tk
 from onepush import notify
 import logging
 import logreset
 import yaml
+import numpy as np
 
 package_name = "com.mihoyo.hyperion"
 
@@ -128,19 +130,6 @@ def adb_swipe(x1, y1, x2, y2):
     command = f"adb shell input swipe {x1} {y1} {x2} {y2}"
     subprocess.run(command, shell=True)
     time.sleep(2)
-
-
-# 获取截图
-def get_screenshot():
-    os.system("adb shell screencap -p /sdcard/screen.png")
-    # datetime_now = datetime.now()
-    # formatted_now = datetime_now.strftime("%d_%H_%M_%S")
-    # screenshot_path = f"./screenshots/screen_{formatted_now}.png"
-    screenshot_path = f"./screenshots/screen.png"
-    os.system(f"adb pull /sdcard/screen.png {screenshot_path}")
-
-    # todo 直接读取到内存
-    return screenshot_path
 
 
 # 获取 tab 的高度
@@ -266,8 +255,11 @@ def get_OCR_result(screenshot_path):
 
 # 获取最新截图，并返回识别结果
 def get_new_screenshot_OCR_result():
-    screenshot_path = get_screenshot()
-    result = get_OCR_result(screenshot_path)
+    screenshot = subprocess.Popen('adb exec-out screencap -p',stdout=subprocess.PIPE)
+    im = screenshot.stdout.read()
+    img_array = np.frombuffer(im, dtype=np.uint8)
+    image = cv2.imdecode(img_array, -1)
+    result = get_OCR_result(image)
     return result
 
 
