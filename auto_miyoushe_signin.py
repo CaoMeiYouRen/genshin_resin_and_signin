@@ -12,6 +12,7 @@ from onepush import notify
 import logging
 import logreset
 import yaml
+import numpy as np
 
 package_name = "com.mihoyo.hyperion"
 
